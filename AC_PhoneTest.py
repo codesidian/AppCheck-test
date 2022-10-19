@@ -12,7 +12,7 @@ def findMostExpensiveNumber(callLogFilepath):
     cheaper_end_time = datetime.datetime.strptime("08:00", "%H:%M").time()
     free_international_minutes = 10
     free_landline_mobile_minutes = 100
-    cost_modifer_rate = 0.33
+    cost_modifer_rate = 3
 
     with open(callLogFilepath) as csv_file:
         raw_call_data = csv.DictReader(csv_file)
@@ -22,6 +22,7 @@ def findMostExpensiveNumber(callLogFilepath):
     number_totals = {}
     for call_info in sorted_call_data:
         phone_number = call_info["PhoneNumber"]
+        # skip incoming and free numbers
         if call_info["CallDirection"] == "INCOMING" or phone_number.startswith("080"):
             continue
 
@@ -49,10 +50,7 @@ def findMostExpensiveNumber(callLogFilepath):
             if free_international_minutes < call_minutes_started:
                 call_minutes_started -= free_international_minutes
                 free_international_minutes = 0
-                # I'm assuming the connection charge isn't included in the reduced rate
-                number_totals[phone_number] += (
-                    (call_minutes_started * 0.8) * cost_modifer
-                ) + 0.5
+                number_totals[phone_number] += ((call_minutes_started * 0.8)) + 0.5
             else:
                 free_international_minutes -= call_minutes_started
 
@@ -63,7 +61,7 @@ def findMostExpensiveNumber(callLogFilepath):
                 free_landline_mobile_minutes = 0
                 number_totals[phone_number] += (
                     call_minutes_started * 0.15
-                ) * cost_modifer
+                ) / cost_modifer
             else:
                 free_landline_mobile_minutes -= call_minutes_started
         # mobile
@@ -75,7 +73,7 @@ def findMostExpensiveNumber(callLogFilepath):
                 free_landline_mobile_minutes = 0
                 number_totals[phone_number] += (
                     call_minutes_started * 0.30
-                ) * cost_modifer
+                ) / cost_modifer
             else:
                 free_landline_mobile_minutes -= call_minutes_started
         else:
